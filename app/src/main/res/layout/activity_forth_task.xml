@@ -52,7 +52,7 @@
         android:layout_marginLeft="0dp"
         android:layout_marginTop="42dp">
 
-        <com.aparutest.aparuinterview.chess.ChessBoard
+        <com.aparutest.aparuinterview.chess.Board
             android:id="@+id/forthTaskChessBoard"
             android:layout_width="match_parent"
             android:layout_height="match_parent" />
@@ -124,18 +124,6 @@
             android:text="конечная точка " />
 
     </RadioGroup>
-
-    <Button
-        android:id="@+id/btnNext"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:layout_alignParentEnd="true"
-        android:layout_alignParentRight="true"
-        android:layout_alignParentBottom="true"
-        android:layout_marginEnd="11dp"
-        android:layout_marginRight="11dp"
-        android:layout_marginBottom="11dp"
-        android:text="@string/btnNextCaption" />
 
     <SeekBar
         android:id="@+id/seekBar"

@@ -52,7 +52,7 @@
         android:layout_marginLeft="0dp"
         android:layout_marginTop="6dp">
 
-        <com.aparutest.aparuinterview.chess.ChessBoard
+        <com.aparutest.aparuinterview.chess.Board
             android:id="@+id/chessBoard"
             android:layout_width="match_parent"
             android:layout_height="match_parent" />

@@ -9,7 +9,7 @@ import android.widget.RadioGroup;
 import android.widget.TextView;
 
 import com.aparutest.aparuinterview.R;
-import com.aparutest.aparuinterview.chess.ChessBoard;
+import com.aparutest.aparuinterview.chess.Board;
 import com.aparutest.aparuinterview.chess.Piece;
 import com.aparutest.aparuinterview.chess.SquareTouchedAction;
 
@@ -26,7 +26,9 @@ public class ThirdTaskActivity extends AppCompatActivity {
     private SquareTouchedAction setKnightPosition;
     private SquareTouchedAction setEndpointPosition;
     private SquareTouchedAction setClippedPosition;
-    private ChessBoard chessBoard;
+    private Board chessBoard;
+
+    private int COLS = 8, ROWS = 8;
 
     private final Point startPoint = new Point();
     private final Point endPoint = new Point();
@@ -35,87 +37,29 @@ public class ThirdTaskActivity extends AppCompatActivity {
     List<Integer> visited = new ArrayList<>();
     Queue<Stack<Integer>> coordQueue = new ArrayDeque<>();
 
-    private void init() {
-        setEndpointPosition = new SquareTouchedAction() {
-            public void run(int col, int row) {
-                Point selectedPoint = new Point(col, row);
-                // avoid to mark cutted square
-                if (clippedSquares.containsKey(col * 8 + row))
-                    return;
-
-                chessBoard.markSquare(col, row, ChessBoard.GREEN);
-
-                // remove previous selection
-                if(endPoint.x > -1 && !endPoint.equals(selectedPoint)) {
-                    chessBoard.markSquare(endPoint.x, endPoint.y, null);
-                }
-
-                if (endPoint.equals(selectedPoint)) {
-                    endPoint.set(-1, -1);
-                } else {
-                    endPoint.set(col, row);
-                }
-            }
-        };
-
-        setClippedPosition = new SquareTouchedAction() {
-            public void run(int col, int row) {
-                Point selectedPoint = new Point(col, row);
-                if(startPoint.equals(selectedPoint) || endPoint.equals(selectedPoint)) return;
-
-                chessBoard.markSquare(col, row, ChessBoard.GRAY);
-                int key = col * 8 + row;
-                if (clippedSquares.containsKey(key)) {
-                    clippedSquares.remove(key);
-                } else {
-                    clippedSquares.put(key, selectedPoint);
-                }
-            }
-        };
-
-        setKnightPosition = new SquareTouchedAction() {
-            public void run(int col, int row) {
-                Point selectedPoint = new Point(col, row);
-
-                // avoid to mark cutted square
-                if (clippedSquares.containsKey(col * 8 + row))
-                    return;
-
-                //remove previous position from the board if not the same square was selected
-                if (startPoint.x > -1 && !(selectedPoint.equals(startPoint))) {
-                    chessBoard.putPiece(Piece.W_KNIGHT, startPoint.x, startPoint.y);
-                }
-
-                chessBoard.putPiece(Piece.W_KNIGHT, col, row);
-                if (startPoint.equals(selectedPoint)) {
-                    startPoint.set(-1, -1);
-                } else {
-                    startPoint.set(col, row);
-                }
-            }
-        };
-    }
-
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_third_task);
 
         chessBoard = findViewById(R.id.chessBoard);
-        init();
+        chessBoard.setDimension(COLS, ROWS);
+        setEndpointPosition = new SetEndpointOnTouchEvent();
+        setClippedPosition = new SetClippedSquareOnTouchEvent();
+        setKnightPosition = new SetStartpointOnTouchEvent();
         refreshThird(null);
 
         chessBoard.setSquareTouchEvent(new SquareTouchedAction() {
             @Override
-            public void run(int col, int row) {
+            public void perform(int col, int row) {
                 RadioGroup radioGroup = findViewById(R.id.rgOperations);
                 switch (radioGroup.getCheckedRadioButtonId()) {
                     case R.id.rbStartPos:
-                        setKnightPosition.run(col, row); break;
+                        setKnightPosition.perform(col, row); break;
                     case R.id.rbEndPos:
-                        setEndpointPosition.run(col, row); break;
+                        setEndpointPosition.perform(col, row); break;
                     case R.id.rbCut:
-                        setClippedPosition.run(col, row);
+                        setClippedPosition.perform(col, row);
                 }
             }
         });
@@ -128,7 +72,7 @@ public class ThirdTaskActivity extends AppCompatActivity {
             return;
         }
 
-        int startPointCoord = startPoint.x * 8 + startPoint.y;
+        int startPointCoord = startPoint.x * COLS + startPoint.y;
         visited.add(startPointCoord);
         Stack<Integer> startPointStack = new Stack<>();
         startPointStack.push(startPointCoord);
@@ -142,14 +86,14 @@ public class ThirdTaskActivity extends AppCompatActivity {
 
         int point = result.pop();
         StringBuilder routeString = new StringBuilder()
-                .append(ChessBoard.getSquareCoordinate(point / 8, point % 8));
+                .append(Board.getSquareCoordinate(point / COLS, point % COLS));
 
         while (!result.isEmpty()) {
             point = result.pop();
-            chessBoard.markSquare(point / 8, point % 8, ChessBoard.GREEN);
+            chessBoard.markSquare(point / COLS, point % COLS, Board.GREEN);
             chessBoard.invalidate();
             routeString.insert(0, " => ")
-                    .insert(0, ChessBoard.getSquareCoordinate(point / 8, point % 8));
+                    .insert(0, Board.getSquareCoordinate(point / COLS, point % COLS));
         }
 
         res.setText(routeString.toString());
@@ -157,11 +101,11 @@ public class ThirdTaskActivity extends AppCompatActivity {
 
     public Stack<Integer> route(Stack<Integer> routeStack) {
         Integer fromIndex = routeStack.peek();
-        Point fromPoint = new Point(fromIndex / 8, fromIndex % 8);
-        List<Point> possibleMoves = Piece.W_KNIGHT.getPossibleMoves(fromPoint, ChessBoard.COLS, ChessBoard.ROWS);
+        Point fromPoint = new Point(fromIndex / COLS, fromIndex % COLS);
+        List<Point> possibleMoves = Piece.W_KNIGHT.getPossibleMoves(fromPoint, Board.COLS, Board.ROWS);
 
         for (Point possibleMovePoint : possibleMoves) {
-            final int point = possibleMovePoint.x * 8 + possibleMovePoint.y;
+            final int point = possibleMovePoint.x * COLS + possibleMovePoint.y;
             if (endPoint.equals(possibleMovePoint)) {
                 routeStack.push(point);
                 return routeStack;
@@ -192,5 +136,64 @@ public class ThirdTaskActivity extends AppCompatActivity {
     public void jumpToFourth(View view) {
         Intent intent = new Intent(this, FourthTaskActivity.class);
         startActivity(intent);
+    }
+
+    private class SetEndpointOnTouchEvent implements SquareTouchedAction {
+        public void perform(int col, int row) {
+            Point selectedPoint = new Point(col, row);
+            // avoid to mark cutted square
+            if (clippedSquares.containsKey(col * COLS + row))
+                return;
+
+            chessBoard.markSquare(col, row, Board.GREEN);
+
+            // remove previous selection
+            if(endPoint.x > -1 && !endPoint.equals(selectedPoint)) {
+                chessBoard.markSquare(endPoint.x, endPoint.y, null);
+            }
+
+            if (endPoint.equals(selectedPoint)) {
+                endPoint.set(-1, -1);
+            } else {
+                endPoint.set(col, row);
+            }
+        }
+    }
+
+    private class SetClippedSquareOnTouchEvent implements SquareTouchedAction {
+        public void perform(int col, int row) {
+            Point selectedPoint = new Point(col, row);
+            if(startPoint.equals(selectedPoint) || endPoint.equals(selectedPoint)) return;
+
+            chessBoard.markSquare(col, row, Board.GRAY);
+            int key = col * COLS + row;
+            if (clippedSquares.containsKey(key)) {
+                clippedSquares.remove(key);
+            } else {
+                clippedSquares.put(key, selectedPoint);
+            }
+        }
+    }
+
+    private class SetStartpointOnTouchEvent implements SquareTouchedAction {
+        public void perform(int col, int row) {
+            Point selectedPoint = new Point(col, row);
+
+            // avoid to mark cutted square
+            if (clippedSquares.containsKey(col * COLS + row))
+                return;
+
+            //remove previous position from the board if not the same square was selected
+            if (startPoint.x > -1 && !(selectedPoint.equals(startPoint))) {
+                chessBoard.putPiece(Piece.W_KNIGHT, startPoint.x, startPoint.y);
+            }
+
+            chessBoard.putPiece(Piece.W_KNIGHT, col, row);
+            if (startPoint.equals(selectedPoint)) {
+                startPoint.set(-1, -1);
+            } else {
+                startPoint.set(col, row);
+            }
+        }
     }
 }

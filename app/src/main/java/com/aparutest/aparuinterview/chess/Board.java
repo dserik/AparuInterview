@@ -13,7 +13,7 @@ import java.util.HashMap;
 import java.util.Map;
 
 
-public final class ChessBoard extends View {
+public final class Board extends View {
 
     public static int COLS = 8;
     public static int ROWS = 8;
@@ -47,7 +47,7 @@ public final class ChessBoard extends View {
         RED.setAlpha(100);
     }
 
-    public ChessBoard(final Context context, final AttributeSet attrs) {
+    public Board(final Context context, final AttributeSet attrs) {
         super(context, attrs);
         this.mTiles = new Tile[COLS][ROWS];
 
@@ -179,7 +179,7 @@ public final class ChessBoard extends View {
 
     private void performTouch(int col, int row) {
         if (squareTouchEvent != null) {
-            squareTouchEvent.run(col, row);
+            squareTouchEvent.perform(col, row);
         }
     }
 
